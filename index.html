@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Estación — Control de Inventario</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d26;
+    --surface2: #22263a;
+    --border: rgba(255,255,255,0.08);
+    --accent: #f5a623;
+    --accent2: #e8472a;
+    --green: #22c55e;
+    --red: #ef4444;
+    --text: #f0f0f0;
+    --muted: #8892a4;
+    --radius: 14px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 0;
+    overflow-x: hidden;
+  }
+
+  /* Header */
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 20px 12px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .logo-icon {
+    width: 32px; height: 32px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+  .logo-text { font-size: 15px; font-weight: 600; }
+  .logo-sub { font-size: 11px; color: var(--muted); }
+
+  .turn-selector {
+    display: flex;
+    gap: 6px;
+  }
+  .turn-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 5px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .turn-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #000;
+  }
+
+  .shift-info {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .shift-badge {
+    background: rgba(245,166,35,0.15);
+    color: var(--accent);
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-family: 'DM Mono', monospace;
+  }
+  .operator-badge {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    color: var(--text);
+  }
+
+  /* Main */
+  .content { padding: 16px 16px 100px; }
+
+  /* Scanner section */
+  .scan-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .scan-header {
+    padding: 14px 16px 12px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .scan-title { font-size: 14px; font-weight: 500; }
+  .scan-toggle {
+    display: flex;
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 2px;
+    gap: 2px;
+  }
+  .scan-mode {
+    font-size: 11px; font-weight: 500;
+    padding: 4px 10px; border-radius: 6px;
+    cursor: pointer; color: var(--muted);
+    border: none; background: none;
+  }
+  .scan-mode.active { background: var(--accent); color: #000; }
+
+  #camera-view {
+    position: relative;
+    width: 100%;
+    display: none;
+    background: #000;
+  }
+  #camera-view.active { display: block; }
+  #video { width: 100%; display: block; max-height: 220px; object-fit: cover; }
+  .scan-overlay {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    pointer-events: none;
+  }
+  .scan-frame {
+    width: 200px; height: 100px;
+    border: 2px solid var(--accent);
+    border-radius: 8px;
+    box-shadow: 0 0 0 2000px rgba(0,0,0,0.45);
+  }
+  .scan-line {
+    position: absolute;
+    width: 196px;
+    height: 2px;
+    background: var(--accent);
+    animation: scanLine 2s ease-in-out infinite;
+    top: 50%;
+    margin-top: -50px;
+  }
+  @keyframes scanLine {
+    0%, 100% { transform: translateY(-40px); opacity: 0.8; }
+    50% { transform: translateY(40px); opacity: 1; }
+  }
+  .scan-label {
+    position: absolute; bottom: 10px;
+    left: 50%; transform: translateX(-50%);
+    font-size: 11px; color: rgba(255,255,255,0.7);
+    background: rgba(0,0,0,0.5); padding: 3px 10px; border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  .scan-start-btn {
+    width: 100%;
+    background: linear-gradient(135deg, rgba(245,166,35,0.12), rgba(245,166,35,0.06));
+    border: 1px dashed rgba(245,166,35,0.4);
+    color: var(--accent);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px; font-weight: 500;
+    padding: 20px;
+    cursor: pointer;
+    border-radius: 0 0 var(--radius) var(--radius);
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: all 0.15s;
+  }
+  .scan-start-btn:active { opacity: 0.7; }
+  .scan-start-btn svg { width: 20px; height: 20px; }
+
+  .manual-input { padding: 8px 16px 14px; display: flex; gap: 8px; }
+  .barcode-input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    padding: 10px 14px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .barcode-input:focus { border-color: var(--accent); }
+  .barcode-input::placeholder { color: var(--muted); font-family: 'DM Sans', sans-serif; }
+  .search-btn {
+    background: var(--accent);
+    border: none; color: #000;
+    font-weight: 600; font-size: 13px;
+    padding: 10px 16px; border-radius: 10px;
+    cursor: pointer;
+  }
+
+  /* Product card */
+  .product-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 16px;
+    animation: slideIn 0.2s ease;
+    display: none;
+  }
+  .product-card.show { display: block; }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .product-header {
+    display: flex; gap: 12px; align-items: flex-start; margin-bottom: 16px;
+  }
+  .product-img {
+    width: 52px; height: 52px;
+    background: var(--surface2);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; flex-shrink: 0;
+  }
+  .product-info { flex: 1; }
+  .product-name { font-size: 15px; font-weight: 600; margin-bottom: 2px; }
+  .product-code {
+    font-size: 11px; color: var(--muted);
+    font-family: 'DM Mono', monospace; margin-bottom: 6px;
+  }
+  .product-cat {
+    display: inline-block;
+    font-size: 10px; font-weight: 600;
+    padding: 2px 8px; border-radius: 20px;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .cat-lubricante { background: rgba(59,130,246,0.15); color: #60a5fa; }
+  .cat-promocion { background: rgba(34,197,94,0.15); color: #4ade80; }
+
+  .stock-row {
+    display: flex; gap: 10px;
+    background: var(--surface2); border-radius: 10px; padding: 12px;
+    margin-bottom: 16px;
+  }
+  .stock-item { flex: 1; text-align: center; }
+  .stock-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .stock-val { font-size: 22px; font-weight: 600; font-family: 'DM Mono', monospace; }
+  .stock-val.low { color: var(--red); }
+  .stock-val.ok { color: var(--green); }
+  .stock-sep { width: 1px; background: var(--border); }
+
+  .qty-control {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 14px;
+  }
+  .qty-label { font-size: 13px; color: var(--muted); flex: 0 0 auto; }
+  .qty-btns { display: flex; align-items: center; gap: 8px; flex: 1; }
+  .qty-btn {
+    width: 36px; height: 36px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    font-size: 18px; font-weight: 300;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.1s;
+    flex-shrink: 0;
+  }
+  .qty-btn:active { background: var(--accent); color: #000; border-color: var(--accent); }
+  #qty-display {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid rgba(245,166,35,0.4);
+    border-radius: 8px;
+    text-align: center;
+    font-size: 20px; font-weight: 600;
+    font-family: 'DM Mono', monospace;
+    padding: 6px;
+    color: var(--accent);
+    outline: none;
+  }
+
+  .confirm-btn {
+    width: 100%;
+    background: var(--accent);
+    border: none; color: #000;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px; font-weight: 600;
+    padding: 14px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .confirm-btn:active { opacity: 0.85; transform: scale(0.98); }
+
+  /* Recent sales */
+  .section-title {
+    font-size: 12px; font-weight: 600;
+    color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px;
+    margin-bottom: 10px;
+  }
+  .sale-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .sale-emoji { font-size: 20px; width: 32px; text-align: center; }
+  .sale-info { flex: 1; }
+  .sale-name { font-size: 13px; font-weight: 500; }
+  .sale-meta { font-size: 11px; color: var(--muted); }
+  .sale-qty {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px; font-weight: 600;
+    color: var(--red);
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--green); color: #000;
+    font-size: 13px; font-weight: 600;
+    padding: 10px 20px; border-radius: 30px;
+    white-space: nowrap;
+    opacity: 0; transition: all 0.3s;
+    z-index: 1000;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.error { background: var(--red); color: #fff; }
+
+  /* Bottom nav */
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 100%; max-width: 480px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: flex;
+    padding: 8px 0 12px;
+    z-index: 100;
+  }
+  .nav-item {
+    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
+    cursor: pointer; padding: 6px 0;
+    color: var(--muted); font-size: 10px;
+    transition: color 0.15s;
+  }
+  .nav-item.active { color: var(--accent); }
+  .nav-item svg { width: 22px; height: 22px; }
+
+  /* Operator modal */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7); z-index: 200;
+    align-items: flex-end; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border-radius: 20px 20px 0 0;
+    padding: 20px 20px 40px;
+    width: 100%; max-width: 480px;
+    animation: slideUp 0.25s ease;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+  .modal-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+  .modal-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+    outline: none;
+  }
+  .modal-input:focus { border-color: var(--accent); }
+  .modal-btn {
+    width: 100%;
+    background: var(--accent);
+    border: none; color: #000;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px; font-weight: 600;
+    padding: 14px; border-radius: 12px; cursor: pointer;
+  }
+
+  /* Export section */
+  .export-btn {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid rgba(245,166,35,0.3);
+    color: var(--accent);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px; font-weight: 500;
+    padding: 13px;
+    border-radius: 12px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  /* Stock view */
+  #view-stock { display: none; }
+  #view-stock.active, #view-scan.active { display: block; }
+  .stock-list-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px 16px;
+    margin-bottom: 8px; display: flex; align-items: center; gap: 12px;
+  }
+  .stock-list-emoji { font-size: 22px; }
+  .stock-list-name { flex: 1; font-size: 14px; font-weight: 500; }
+  .stock-list-qty {
+    font-family: 'DM Mono', monospace;
+    font-size: 16px; font-weight: 600;
+    min-width: 50px; text-align: right;
+  }
+
+  .progress-bar {
+    height: 4px; background: var(--surface2); border-radius: 2px; margin-top: 4px;
+  }
+  .progress-fill {
+    height: 100%; border-radius: 2px;
+    transition: width 0.3s;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div class="logo">
+      <div class="logo-icon">⛽</div>
+      <div>
+        <div class="logo-text">EstacionPRO</div>
+        <div class="logo-sub">Control de Inventario</div>
+      </div>
+    </div>
+    <div class="turn-selector">
+      <button class="turn-btn" onclick="setTurn(1)">T1</button>
+      <button class="turn-btn" onclick="setTurn(2)">T2</button>
+      <button class="turn-btn active" onclick="setTurn(3)">T3</button>
+    </div>
+  </div>
+  <div class="shift-info">
+    <span class="shift-badge" id="shift-label">TURNO 3</span>
+    <span id="current-date" style="font-size:12px;"></span>
+    <span class="operator-badge" onclick="openOperatorModal()" id="operator-name">Operador ▾</span>
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- SCAN VIEW -->
+  <div id="view-scan" class="active">
+    <div class="scan-section">
+      <div class="scan-header">
+        <span class="scan-title">Escanear Producto</span>
+        <div class="scan-toggle">
+          <button class="scan-mode active" id="mode-camera" onclick="setMode('camera')">📷 Cámara</button>
+          <button class="scan-mode" id="mode-manual" onclick="setMode('manual')">Manual</button>
+        </div>
+      </div>
+
+      <div id="camera-view">
+        <video id="video" autoplay muted playsinline></video>
+        <div class="scan-overlay">
+          <div class="scan-frame"></div>
+          <div class="scan-line"></div>
+          <div class="scan-label">Coloca el código de barras aquí</div>
+        </div>
+      </div>
+
+      <button class="scan-start-btn" id="scan-btn" onclick="toggleCamera()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/>
+          <rect x="7" y="7" width="10" height="10" rx="1"/>
+        </svg>
+        Activar Cámara
+      </button>
+
+      <div class="manual-input" id="manual-section" style="display:none;">
+        <input type="text" class="barcode-input" id="barcode-input" placeholder="Ingresa código de barras..." inputmode="numeric">
+        <button class="search-btn" onclick="searchProduct()">Buscar</button>
+      </div>
+    </div>
+
+    <!-- Product card -->
+    <div class="product-card" id="product-card">
+      <div class="product-header">
+        <div class="product-img" id="prod-emoji">🛢️</div>
+        <div class="product-info">
+          <div class="product-name" id="prod-name">—</div>
+          <div class="product-code" id="prod-code">—</div>
+          <span class="product-cat" id="prod-cat">—</span>
+        </div>
+      </div>
+
+      <div class="stock-row">
+        <div class="stock-item">
+          <div class="stock-label">Stock actual</div>
+          <div class="stock-val" id="prod-stock">—</div>
+        </div>
+        <div class="stock-sep"></div>
+        <div class="stock-item">
+          <div class="stock-label">Vendido hoy</div>
+          <div class="stock-val ok" id="prod-sold">0</div>
+        </div>
+        <div class="stock-sep"></div>
+        <div class="stock-item">
+          <div class="stock-label">Mínimo</div>
+          <div class="stock-val" id="prod-min" style="color:var(--muted);">—</div>
+        </div>
+      </div>
+
+      <div class="qty-control">
+        <span class="qty-label">Cantidad vendida</span>
+        <div class="qty-btns">
+          <button class="qty-btn" onclick="changeQty(-1)">−</button>
+          <input type="number" id="qty-display" value="1" min="1" max="999">
+          <button class="qty-btn" onclick="changeQty(1)">+</button>
+        </div>
+      </div>
+
+      <button class="confirm-btn" onclick="confirmSale()">✓ Registrar Venta</button>
+    </div>
+
+    <!-- Recent sales -->
+    <div id="recent-section" style="display:none;">
+      <div class="section-title">Ventas de este turno</div>
+      <div id="recent-list"></div>
+    </div>
+
+    <button class="export-btn" onclick="exportData()">
+      📤 Exportar datos del turno (JSON/CSV)
+    </button>
+  </div>
+
+  <!-- STOCK VIEW -->
+  <div id="view-stock">
+    <div class="section-title">Inventario actual</div>
+    <div id="stock-list"></div>
+  </div>
+
+</div>
+
+<!-- Bottom Nav -->
+<div class="bottom-nav">
+  <div class="nav-item active" id="nav-scan" onclick="switchView('scan')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+      <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/>
+      <line x1="3" y1="12" x2="21" y2="12"/>
+    </svg>
+    Escanear
+  </div>
+  <div class="nav-item" id="nav-stock" onclick="switchView('stock')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+      <path d="M20 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
+      <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+      <line x1="12" y1="12" x2="12" y2="12.01"/>
+    </svg>
+    Inventario
+  </div>
+  <div class="nav-item" id="nav-history" onclick="switchView('history')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+      <circle cx="12" cy="12" r="10"/>
+      <polyline points="12 6 12 12 16 14"/>
+    </svg>
+    Historial
+  </div>
+</div>
+
+<!-- Operator Modal -->
+<div class="modal-overlay" id="op-modal">
+  <div class="modal">
+    <div class="modal-title">👤 Nombre del Operador</div>
+    <input class="modal-input" id="op-input" type="text" placeholder="Ingresa tu nombre...">
+    <button class="modal-btn" onclick="saveOperator()">Confirmar</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/zxing-wasm@1.2.12/dist/iife/zxing-wasm.min.js"></script>
+<script>
+// ========== DATA ==========
+const DEFAULT_PRODUCTS = [
+  { code: "7750001001001", name: "Aceite Mobil 1W-40 1L", category: "lubricante", emoji: "🛢️", stock: 24, min: 5, price: 45.90 },
+  { code: "7750001001002", name: "Aceite Castrol GTX 20W-50 1L", category: "lubricante", emoji: "🛢️", stock: 18, min: 5, price: 38.50 },
+  { code: "7750001001003", name: "Aceite Havoline 10W-30 1L", category: "lubricante", emoji: "🛢️", stock: 12, min: 4, price: 32.00 },
+  { code: "7750001002001", name: "Galonera Mobil 4L", category: "lubricante", emoji: "🪣", stock: 8, min: 3, price: 145.00 },
+  { code: "7750001002002", name: "Galonera Castrol 4L", category: "lubricante", emoji: "🪣", stock: 6, min: 3, price: 128.00 },
+  { code: "7750001003001", name: "Promo Lavado + Aceite", category: "promocion", emoji: "🎁", stock: 15, min: 2, price: 65.00 },
+  { code: "7750001003002", name: "Promo Combo Revisión", category: "promocion", emoji: "🎁", stock: 10, min: 2, price: 85.00 },
+  { code: "7750001003003", name: "Kit Aditivo + Filtro", category: "promocion", emoji: "🎁", stock: 7, min: 2, price: 55.00 },
+  { code: "7750001004001", name: "Filtro de Aceite Universal", category: "lubricante", emoji: "🔧", stock: 20, min: 5, price: 18.00 },
+  { code: "7750001004002", name: "Refrigerante Anticongelante 1L", category: "lubricante", emoji: "💧", stock: 14, min: 4, price: 22.00 },
+];
+
+function loadData() {
+  const saved = localStorage.getItem('estacion_products');
+  if (saved) return JSON.parse(saved);
+  localStorage.setItem('estacion_products', JSON.stringify(DEFAULT_PRODUCTS));
+  return DEFAULT_PRODUCTS;
+}
+function saveProducts(products) {
+  localStorage.setItem('estacion_products', JSON.stringify(products));
+}
+function loadSales() {
+  const saved = localStorage.getItem('estacion_sales');
+  return saved ? JSON.parse(saved) : [];
+}
+function saveSales(sales) {
+  localStorage.setItem('estacion_sales', JSON.stringify(sales));
+}
+
+let products = loadData();
+let sales = loadSales();
+let currentTurn = parseInt(localStorage.getItem('estacion_turn') || '3');
+let currentOperator = localStorage.getItem('estacion_operator') || 'Operador';
+let selectedProduct = null;
+let cameraActive = false;
+let scanMode = 'camera';
+
+// ========== INIT ==========
+function init() {
+  document.getElementById('current-date').textContent = new Date().toLocaleDateString('es-PE', { day:'2-digit', month:'short', year:'numeric' });
+  document.getElementById('operator-name').textContent = currentOperator + ' ▾';
+  document.getElementById('op-input').value = currentOperator;
+  document.querySelector(`.turn-btn:nth-child(${currentTurn})`).classList.add('active');
+  document.getElementById('shift-label').textContent = 'TURNO ' + currentTurn;
+  renderStockList();
+  renderRecentSales();
+}
+
+// ========== TURN ==========
+function setTurn(n) {
+  document.querySelectorAll('.turn-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.turn-btn')[n-1].classList.add('active');
+  currentTurn = n;
+  document.getElementById('shift-label').textContent = 'TURNO ' + n;
+  localStorage.setItem('estacion_turn', n);
+  renderRecentSales();
+}
+
+// ========== SCAN MODES ==========
+function setMode(mode) {
+  scanMode = mode;
+  document.getElementById('mode-camera').classList.toggle('active', mode === 'camera');
+  document.getElementById('mode-manual').classList.toggle('active', mode === 'manual');
+  document.getElementById('manual-section').style.display = mode === 'manual' ? 'flex' : 'none';
+  document.getElementById('scan-btn').style.display = mode === 'camera' ? 'flex' : 'none';
+  if (mode !== 'camera' && cameraActive) stopCamera();
+}
+
+// ========== CAMERA — getUserMedia + BarcodeDetector nativo / zxing-wasm fallback ==========
+let videoStream = null;
+let scanLoop = null;
+let scanCanvas = null;
+let scanCtx = null;
+let barcodeDetector = null;
+let zxingReady = false;
+
+// Inicializar zxing-wasm como fallback
+async function initZxing() {
+  try {
+    if (window.ZXingWasm) {
+      await ZXingWasm.setZXingModuleOverrides({ locateFile: f => `https://cdn.jsdelivr.net/npm/zxing-wasm@1.2.12/dist/iife/${f}` });
+      zxingReady = true;
+    }
+  } catch(e) { zxingReady = false; }
+}
+initZxing();
+
+function toggleCamera() {
+  if (cameraActive) { stopCamera(); } else { startCamera(); }
+}
+
+async function startCamera() {
+  const btn = document.getElementById('scan-btn');
+  const view = document.getElementById('camera-view');
+
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    showToast('⚠ Tu navegador no soporta cámara. Usa Chrome o Safari actualizados.', true);
+    setMode('manual');
+    return;
+  }
+
+  btn.innerHTML = `<span style="display:flex;align-items:center;gap:8px;justify-content:center">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;animation:spin 1s linear infinite"><circle cx="12" cy="12" r="10" stroke-dasharray="40" stroke-dashoffset="10"/></svg>
+    Iniciando cámara...</span>`;
+
+  try {
+    videoStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+      audio: false
+    });
+
+    const video = document.getElementById('video');
+    video.srcObject = videoStream;
+    await video.play();
+
+    view.classList.add('active');
+    cameraActive = true;
+
+    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Detener cámara`;
+
+    // Preparar canvas para captura de frames
+    scanCanvas = document.createElement('canvas');
+    scanCtx = scanCanvas.getContext('2d');
+
+    // Usar BarcodeDetector nativo si está disponible (Chrome Android)
+    if ('BarcodeDetector' in window) {
+      barcodeDetector = new BarcodeDetector({ formats: ['ean_13','ean_8','code_128','code_39','upc_a','upc_e','qr_code'] });
+      startNativeScan(video);
+    } else {
+      startZxingScan(video);
+    }
+
+  } catch(err) {
+    let msg = '⚠ No se pudo acceder a la cámara.';
+    if (err.name === 'NotAllowedError') msg = '⚠ Permiso de cámara denegado. Ve a Ajustes > Permisos del navegador y activa la cámara.';
+    else if (err.name === 'NotFoundError') msg = '⚠ No se encontró cámara en este dispositivo.';
+    else if (err.name === 'NotReadableError') msg = '⚠ La cámara está en uso por otra app.';
+    showToast(msg, true);
+    stopCamera();
+    setMode('manual');
+  }
+}
+
+function startNativeScan(video) {
+  async function detect() {
+    if (!cameraActive) return;
+    try {
+      const results = await barcodeDetector.detect(video);
+      if (results.length > 0) {
+        const code = results[0].rawValue;
+        stopCamera();
+        findProduct(code);
+        return;
+      }
+    } catch(e) {}
+    scanLoop = requestAnimationFrame(detect);
+  }
+  scanLoop = requestAnimationFrame(detect);
+}
+
+function startZxingScan(video) {
+  let lastScan = 0;
+  async function detect() {
+    if (!cameraActive) return;
+    const now = Date.now();
+    if (now - lastScan > 400 && video.readyState === video.HAVE_ENOUGH_DATA) {
+      lastScan = now;
+      try {
+        scanCanvas.width = video.videoWidth;
+        scanCanvas.height = video.videoHeight;
+        scanCtx.drawImage(video, 0, 0);
+        if (zxingReady && window.ZXingWasm) {
+          const imageData = scanCtx.getImageData(0, 0, scanCanvas.width, scanCanvas.height);
+          const result = await ZXingWasm.readBarcodesFromImageData(imageData, { tryHarder: true });
+          if (result && result.length > 0 && result[0].text) {
+            stopCamera();
+            findProduct(result[0].text);
+            return;
+          }
+        }
+      } catch(e) {}
+    }
+    scanLoop = requestAnimationFrame(detect);
+  }
+  scanLoop = requestAnimationFrame(detect);
+}
+
+function stopCamera() {
+  cameraActive = false;
+  if (scanLoop) { cancelAnimationFrame(scanLoop); scanLoop = null; }
+  if (videoStream) { videoStream.getTracks().forEach(t => t.stop()); videoStream = null; }
+  const video = document.getElementById('video');
+  video.srcObject = null;
+  document.getElementById('camera-view').classList.remove('active');
+  document.getElementById('scan-btn').innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><rect x="7" y="7" width="10" height="10" rx="1"/></svg> Activar Cámara`;
+}
+
+// ========== PRODUCT SEARCH ==========
+function searchProduct() {
+  const code = document.getElementById('barcode-input').value.trim();
+  if (!code) return;
+  findProduct(code);
+}
+
+function findProduct(code) {
+  products = loadData();
+  const prod = products.find(p => p.code === code);
+  if (prod) {
+    showProduct(prod);
+  } else {
+    showToast('❌ Producto no encontrado: ' + code, true);
+  }
+}
+
+function showProduct(prod) {
+  selectedProduct = prod;
+  document.getElementById('product-card').classList.add('show');
+  document.getElementById('prod-emoji').textContent = prod.emoji;
+  document.getElementById('prod-name').textContent = prod.name;
+  document.getElementById('prod-code').textContent = prod.code;
+
+  const catEl = document.getElementById('prod-cat');
+  catEl.textContent = prod.category === 'lubricante' ? '🛢 Lubricante' : '🎁 Promoción';
+  catEl.className = 'product-cat ' + (prod.category === 'lubricante' ? 'cat-lubricante' : 'cat-promocion');
+
+  const stockEl = document.getElementById('prod-stock');
+  stockEl.textContent = prod.stock;
+  stockEl.className = 'stock-val ' + (prod.stock <= prod.min ? 'low' : 'ok');
+  document.getElementById('prod-min').textContent = prod.min;
+
+  const todaySold = sales
+    .filter(s => s.code === prod.code && s.date === today())
+    .reduce((a, s) => a + s.qty, 0);
+  document.getElementById('prod-sold').textContent = todaySold;
+
+  document.getElementById('qty-display').value = 1;
+  document.getElementById('product-card').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function today() {
+  return new Date().toISOString().split('T')[0];
+}
+
+// ========== SALE ==========
+function changeQty(delta) {
+  const input = document.getElementById('qty-display');
+  let v = parseInt(input.value) + delta;
+  if (v < 1) v = 1;
+  input.value = v;
+}
+
+function confirmSale() {
+  if (!selectedProduct) return;
+  const qty = parseInt(document.getElementById('qty-display').value);
+  if (qty < 1) { showToast('Cantidad inválida', true); return; }
+  if (qty > selectedProduct.stock) { showToast('⚠️ Stock insuficiente (' + selectedProduct.stock + ' disp.)', true); return; }
+
+  products = loadData();
+  const idx = products.findIndex(p => p.code === selectedProduct.code);
+  products[idx].stock -= qty;
+  saveProducts(products);
+
+  const saleRecord = {
+    id: Date.now(),
+    code: selectedProduct.code,
+    name: selectedProduct.name,
+    emoji: selectedProduct.emoji,
+    category: selectedProduct.category,
+    qty: qty,
+    turn: currentTurn,
+    operator: currentOperator,
+    date: today(),
+    time: new Date().toLocaleTimeString('es-PE', { hour:'2-digit', minute:'2-digit' }),
+    price: selectedProduct.price
+  };
+  sales = loadSales();
+  sales.push(saleRecord);
+  saveSales(sales);
+
+  showToast(`✓ Venta registrada: ${qty} × ${selectedProduct.name}`);
+  document.getElementById('product-card').classList.remove('show');
+  selectedProduct = null;
+  renderRecentSales();
+  renderStockList();
+}
+
+// ========== RENDER ==========
+function renderRecentSales() {
+  const list = document.getElementById('recent-list');
+  const section = document.getElementById('recent-section');
+  const todaySales = loadSales()
+    .filter(s => s.date === today() && s.turn == currentTurn)
+    .reverse().slice(0, 6);
+
+  if (todaySales.length === 0) { section.style.display = 'none'; return; }
+  section.style.display = 'block';
+
+  list.innerHTML = todaySales.map(s => `
+    <div class="sale-item">
+      <div class="sale-emoji">${s.emoji}</div>
+      <div class="sale-info">
+        <div class="sale-name">${s.name}</div>
+        <div class="sale-meta">${s.time} · ${s.operator}</div>
+      </div>
+      <div class="sale-qty">−${s.qty}</div>
+    </div>
+  `).join('');
+}
+
+function renderStockList() {
+  const prods = loadData();
+  const list = document.getElementById('stock-list');
+  list.innerHTML = prods.map(p => {
+    const pct = Math.round((p.stock / (p.stock + p.min + 5)) * 100);
+    const color = p.stock <= p.min ? '#ef4444' : p.stock <= p.min * 2 ? '#f5a623' : '#22c55e';
+    return `
+      <div class="stock-list-item">
+        <div class="stock-list-emoji">${p.emoji}</div>
+        <div style="flex:1">
+          <div class="stock-list-name">${p.name}</div>
+          <div style="font-size:11px;color:var(--muted);margin:2px 0;">${p.code}</div>
+          <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${color};"></div></div>
+        </div>
+        <div class="stock-list-qty" style="color:${color}">${p.stock}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ========== OPERATOR ==========
+function openOperatorModal() {
+  document.getElementById('op-modal').classList.add('open');
+  document.getElementById('op-input').focus();
+}
+function saveOperator() {
+  const name = document.getElementById('op-input').value.trim();
+  if (!name) return;
+  currentOperator = name;
+  localStorage.setItem('estacion_operator', name);
+  document.getElementById('operator-name').textContent = name + ' ▾';
+  document.getElementById('op-modal').classList.remove('open');
+}
+document.getElementById('op-modal').addEventListener('click', function(e) {
+  if (e.target === this) this.classList.remove('open');
+});
+
+// ========== VIEW SWITCH ==========
+function switchView(view) {
+  document.getElementById('view-scan').classList.remove('active');
+  document.getElementById('view-stock').classList.remove('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+  if (view === 'scan' || view === 'history') {
+    document.getElementById('view-scan').classList.add('active');
+    document.getElementById('nav-' + (view === 'scan' ? 'scan' : 'history')).classList.add('active');
+  } else {
+    document.getElementById('view-stock').classList.add('active');
+    document.getElementById('nav-stock').classList.add('active');
+    renderStockList();
+  }
+}
+
+// ========== EXPORT ==========
+function exportData() {
+  const allSales = loadSales();
+  const today_sales = allSales.filter(s => s.date === today());
+
+  const csv = [
+    'Fecha,Turno,Hora,Operador,Código,Producto,Categoría,Cantidad,Precio',
+    ...today_sales.map(s =>
+      `${s.date},${s.turn},${s.time},${s.operator},"${s.code}","${s.name}",${s.category},${s.qty},${s.price}`
+    )
+  ].join('\n');
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `ventas_${today()}_turno${currentTurn}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('📤 CSV exportado correctamente');
+}
+
+// ========== TOAST ==========
+function showToast(msg, isError = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isError ? ' error' : '');
+  setTimeout(() => t.className = 'toast', 2800);
+}
+
+// ========== BARCODE MANUAL ENTER ==========
+document.getElementById('barcode-input')?.addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') searchProduct();
+});
+
+init();
+</script>
+</body>
+</html>

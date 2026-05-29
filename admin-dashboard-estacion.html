@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — EstacionPRO Dashboard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #f5f4f1;
+    --surface: #ffffff;
+    --surface2: #f9f8f5;
+    --border: #e8e6e0;
+    --border2: #d4d0c8;
+    --accent: #d4500a;
+    --accent-light: #fff0e8;
+    --text: #1a1814;
+    --muted: #7a756a;
+    --green: #1a7a4a;
+    --green-bg: #edf7f2;
+    --red: #c0392b;
+    --red-bg: #fdf2f0;
+    --amber: #b86e00;
+    --amber-bg: #fff8ec;
+    --blue: #1a56a0;
+    --blue-bg: #edf3fc;
+    --sidebar-w: 220px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: var(--sidebar-w);
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0; left: 0;
+    height: 100vh;
+    z-index: 50;
+  }
+  .sidebar-logo {
+    padding: 20px 18px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo-mark {
+    width: 36px; height: 36px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; margin-bottom: 8px;
+  }
+  .sidebar-title { font-size: 15px; font-weight: 600; }
+  .sidebar-sub { font-size: 11px; color: var(--muted); }
+  .sidebar-admin {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.6px;
+    color: var(--accent);
+    background: var(--accent-light);
+    padding: 2px 7px; border-radius: 20px;
+    display: inline-block; margin-top: 4px;
+    text-transform: uppercase;
+  }
+
+  nav { flex: 1; padding: 12px 0; overflow-y: auto; }
+  .nav-group { margin-bottom: 6px; }
+  .nav-group-label {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.7px;
+    color: var(--muted); text-transform: uppercase;
+    padding: 10px 18px 4px;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 9px;
+    padding: 8px 18px;
+    font-size: 13px; font-weight: 500;
+    color: var(--muted); cursor: pointer;
+    transition: all 0.12s;
+    border-left: 2px solid transparent;
+  }
+  .nav-item:hover { color: var(--text); background: var(--surface2); }
+  .nav-item.active { color: var(--accent); border-left-color: var(--accent); background: var(--accent-light); }
+  .nav-icon { font-size: 15px; }
+
+  /* MAIN */
+  .main {
+    margin-left: var(--sidebar-w);
+    flex: 1; display: flex; flex-direction: column; min-height: 100vh;
+  }
+
+  /* TOP BAR */
+  .topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 28px;
+    height: 56px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 40;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 12px; }
+  .page-title { font-size: 16px; font-weight: 600; }
+  .topbar-right { display: flex; align-items: center; gap: 10px; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 13px; font-weight: 500; font-family: 'Inter', sans-serif;
+    padding: 7px 14px; border-radius: 7px; cursor: pointer;
+    transition: all 0.12s; border: none;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #bf4508; }
+  .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text); }
+  .btn-ghost:hover { background: var(--surface2); }
+  .btn-green { background: var(--green-bg); color: var(--green); border: 1px solid #c5e8d5; }
+  .btn-green:hover { background: #d5f0e4; }
+
+  /* CONTENT */
+  .content { padding: 24px 28px; flex: 1; overflow-x: auto; }
+
+  /* STATS ROW */
+  .stats-row {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 14px; margin-bottom: 24px;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px 18px;
+  }
+  .stat-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+  .stat-val { font-size: 26px; font-weight: 600; line-height: 1; margin-bottom: 4px; }
+  .stat-sub { font-size: 11px; color: var(--muted); }
+
+  /* SECTION */
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .section-header {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .section-title { font-size: 14px; font-weight: 600; }
+  .section-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+  /* FILTERS */
+  .filters {
+    display: flex; gap: 8px;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .filter-label { font-size: 12px; color: var(--muted); font-weight: 500; }
+  .filter-select {
+    font-size: 12px; font-family: 'Inter', sans-serif;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 5px 10px;
+    color: var(--text);
+    outline: none; cursor: pointer;
+  }
+  .filter-input {
+    font-size: 12px; font-family: 'Inter', sans-serif;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 5px 10px;
+    color: var(--text);
+    outline: none; width: 180px;
+  }
+  .filter-input:focus, .filter-select:focus { border-color: var(--accent); }
+
+  /* TABLE */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th {
+    background: var(--surface2);
+    padding: 10px 14px;
+    font-size: 11px; font-weight: 600; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border);
+    text-align: left; white-space: nowrap;
+    position: sticky; top: 0;
+  }
+  tbody tr { border-bottom: 1px solid var(--border); }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--surface2); }
+  tbody td { padding: 10px 14px; color: var(--text); vertical-align: middle; }
+  td.mono { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--muted); }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px;
+  }
+  .badge-lube { background: var(--blue-bg); color: var(--blue); }
+  .badge-promo { background: var(--green-bg); color: var(--green); }
+  .badge-turn { background: var(--amber-bg); color: var(--amber); font-family: 'JetBrains Mono', monospace; }
+  .badge-low { background: var(--red-bg); color: var(--red); }
+  .badge-ok { background: var(--green-bg); color: var(--green); }
+
+  /* Editable cell */
+  .edit-cell {
+    cursor: pointer; padding: 3px 6px;
+    border-radius: 4px;
+    transition: background 0.1s;
+    display: inline-block;
+  }
+  .edit-cell:hover { background: var(--accent-light); color: var(--accent); }
+  .cell-input {
+    font-size: 13px; font-family: 'Inter', sans-serif;
+    background: #fff; border: 1.5px solid var(--accent);
+    border-radius: 5px; padding: 3px 8px; width: 80px; outline: none;
+  }
+
+  /* Stock bar */
+  .stock-bar-wrap { display: flex; align-items: center; gap: 8px; }
+  .stock-bar { height: 5px; border-radius: 3px; flex: 1; background: var(--border); min-width: 50px; }
+  .stock-fill { height: 100%; border-radius: 3px; }
+  .stock-num { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 500; min-width: 28px; text-align: right; }
+
+  /* Actions */
+  .action-btn {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 11px; font-weight: 500; padding: 4px 9px;
+    border-radius: 5px; cursor: pointer; border: none;
+    font-family: 'Inter', sans-serif; transition: all 0.12s;
+  }
+  .action-edit { background: var(--blue-bg); color: var(--blue); }
+  .action-edit:hover { background: #d5e7fc; }
+  .action-del { background: var(--red-bg); color: var(--red); }
+  .action-del:hover { background: #fde8e5; }
+
+  /* Tab bar */
+  .tab-bar {
+    display: flex; gap: 0;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    overflow-x: auto;
+  }
+  .tab {
+    padding: 13px 20px;
+    font-size: 13px; font-weight: 500;
+    color: var(--muted); cursor: pointer;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap; transition: all 0.12s;
+  }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab:hover { color: var(--text); }
+
+  /* Modal */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4); z-index: 200;
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border-radius: 12px; padding: 24px;
+    width: 480px; max-width: 95vw;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.15);
+    animation: popIn 0.2s ease;
+  }
+  @keyframes popIn {
+    from { opacity:0; transform:scale(0.96); }
+    to { opacity:1; transform:scale(1); }
+  }
+  .modal-title { font-size: 16px; font-weight: 600; margin-bottom: 18px; }
+  .form-group { margin-bottom: 14px; }
+  .form-label { font-size: 12px; font-weight: 500; color: var(--muted); margin-bottom: 5px; display: block; text-transform: uppercase; letter-spacing: 0.4px; }
+  .form-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    font-size: 14px; font-family: 'Inter', sans-serif;
+    padding: 9px 12px; color: var(--text); outline: none;
+  }
+  .form-input:focus { border-color: var(--accent); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+  .form-select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    font-size: 14px; font-family: 'Inter', sans-serif;
+    padding: 9px 12px; color: var(--text); outline: none; cursor: pointer;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--text); color: #fff;
+    font-size: 13px; padding: 10px 18px; border-radius: 8px;
+    opacity: 0; transform: translateY(8px);
+    transition: all 0.25s; pointer-events: none; z-index: 500;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+
+  /* Excel-style table for sales */
+  .excel-table td, .excel-table th { white-space: nowrap; }
+  .excel-table tr.t1 td:first-child { border-left: 3px solid #1a56a0; }
+  .excel-table tr.t2 td:first-child { border-left: 3px solid var(--green); }
+  .excel-table tr.t3 td:first-child { border-left: 3px solid var(--accent); }
+
+  .tabs-content > div { display: none; }
+  .tabs-content > div.active { display: block; }
+
+  .summary-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+    padding: 14px 18px; border-bottom: 1px solid var(--border);
+  }
+  .summary-item {
+    background: var(--surface2);
+    border-radius: 8px; padding: 12px 14px;
+    text-align: center;
+  }
+  .summary-turn { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 4px; }
+  .summary-num { font-size: 20px; font-weight: 600; font-family: 'JetBrains Mono', monospace; }
+
+  /* Page views */
+  .page-view { display: none; }
+  .page-view.active { display: block; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">⛽</div>
+    <div class="sidebar-title">EstacionPRO</div>
+    <div class="sidebar-sub">Panel de Administración</div>
+    <div class="sidebar-admin">Admin</div>
+  </div>
+  <nav>
+    <div class="nav-group">
+      <div class="nav-group-label">Reportes</div>
+      <div class="nav-item active" onclick="goPage('dashboard')"><span class="nav-icon">📊</span> Dashboard</div>
+      <div class="nav-item" onclick="goPage('ventas')"><span class="nav-icon">📋</span> Registro de Ventas</div>
+      <div class="nav-item" onclick="goPage('turnos')"><span class="nav-icon">🕐</span> Resumen por Turno</div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Gestión</div>
+      <div class="nav-item" onclick="goPage('productos')"><span class="nav-icon">📦</span> Productos</div>
+      <div class="nav-item" onclick="goPage('stock')"><span class="nav-icon">🔢</span> Stock</div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Herramientas</div>
+      <div class="nav-item" onclick="goPage('importar')"><span class="nav-icon">📤</span> Importar/Exportar</div>
+    </div>
+  </nav>
+</aside>
+
+<div class="main">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="page-title" id="page-title">Dashboard</span>
+    </div>
+    <div class="topbar-right">
+      <button class="btn btn-ghost" onclick="loadDemoData()">📱 Cargar datos demo</button>
+      <button class="btn btn-primary" onclick="openAddProduct()">+ Nuevo Producto</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD PAGE -->
+    <div class="page-view active" id="page-dashboard">
+      <div class="stats-row" id="stats-row"></div>
+
+      <div class="section">
+        <div class="section-header">
+          <div>
+            <div class="section-title">Ventas por turno — Hoy</div>
+            <div class="section-sub" id="today-label"></div>
+          </div>
+        </div>
+        <div class="summary-grid" id="turn-summary"></div>
+        <div class="table-wrap">
+          <table class="excel-table" id="dashboard-table">
+            <thead>
+              <tr>
+                <th>Turno</th><th>Hora</th><th>Operador</th>
+                <th>Producto</th><th>Categoría</th><th>Cantidad</th>
+              </tr>
+            </thead>
+            <tbody id="dashboard-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- VENTAS PAGE -->
+    <div class="page-view" id="page-ventas">
+      <div class="section">
+        <div class="section-header">
+          <div>
+            <div class="section-title">Registro completo de ventas</div>
+            <div class="section-sub">Editable — doble clic en celda para modificar</div>
+          </div>
+          <button class="btn btn-green" onclick="exportCSV()">⬇ Exportar CSV</button>
+        </div>
+        <div class="filters">
+          <span class="filter-label">Filtrar:</span>
+          <input type="date" class="filter-input" id="filter-date" style="width:150px;" onchange="renderVentas()">
+          <select class="filter-select" id="filter-turn" onchange="renderVentas()">
+            <option value="">Todos los turnos</option>
+            <option value="1">Turno 1</option>
+            <option value="2">Turno 2</option>
+            <option value="3">Turno 3</option>
+          </select>
+          <select class="filter-select" id="filter-cat" onchange="renderVentas()">
+            <option value="">Todas las categorías</option>
+            <option value="lubricante">Lubricante</option>
+            <option value="promocion">Promoción</option>
+          </select>
+          <input type="text" class="filter-input" placeholder="Buscar producto..." id="filter-search" oninput="renderVentas()">
+        </div>
+        <div class="table-wrap">
+          <table class="excel-table" id="ventas-table">
+            <thead>
+              <tr>
+                <th>Fecha</th><th>Turno</th><th>Hora</th><th>Operador</th>
+                <th>Código</th><th>Producto</th><th>Categoría</th>
+                <th>Cantidad</th><th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="ventas-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TURNOS PAGE -->
+    <div class="page-view" id="page-turnos">
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">Resumen por Turno</div>
+        </div>
+        <div class="filters">
+          <input type="date" class="filter-input" id="filter-date-turnos" style="width:150px;" onchange="renderTurnos()">
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Fecha</th><th>Turno</th><th>Operador</th>
+                <th>Productos vendidos</th><th>Unidades</th><th>Detalle</th>
+              </tr>
+            </thead>
+            <tbody id="turnos-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRODUCTOS PAGE -->
+    <div class="page-view" id="page-productos">
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">Catálogo de Productos</div>
+          <button class="btn btn-primary" onclick="openAddProduct()">+ Agregar</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th></th><th>Código</th><th>Nombre</th><th>Categoría</th>
+                <th>Precio</th><th>Stock mín.</th><th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="productos-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- STOCK PAGE -->
+    <div class="page-view" id="page-stock">
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">Control de Stock</div>
+          <div style="font-size:12px;color:var(--muted);">Edita el stock directamente en la tabla</div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th></th><th>Producto</th><th>Categoría</th>
+                <th>Stock actual</th><th>Mínimo</th><th>Estado</th><th>Ajustar</th>
+              </tr>
+            </thead>
+            <tbody id="stock-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- IMPORTAR PAGE -->
+    <div class="page-view" id="page-importar">
+      <div class="section" style="padding:24px;">
+        <div class="section-title" style="margin-bottom:16px;">Sincronización con App Móvil</div>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6;">
+          La app móvil genera archivos CSV con las ventas por turno. Importa ese archivo aquí para sincronizar el registro. También puedes exportar el inventario completo para respaldo.
+        </p>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <div style="border:2px dashed var(--border2);border-radius:10px;padding:24px;text-align:center;">
+            <div style="font-size:32px;margin-bottom:10px;">📥</div>
+            <div style="font-size:14px;font-weight:600;margin-bottom:6px;">Importar CSV de Ventas</div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">Archivo exportado desde la app móvil</div>
+            <input type="file" id="csv-file" accept=".csv,.json" style="display:none" onchange="importCSV(this)">
+            <button class="btn btn-primary" onclick="document.getElementById('csv-file').click()">Seleccionar archivo</button>
+          </div>
+
+          <div style="border:2px dashed var(--border2);border-radius:10px;padding:24px;text-align:center;">
+            <div style="font-size:32px;margin-bottom:10px;">📤</div>
+            <div style="font-size:14px;font-weight:600;margin-bottom:6px;">Exportar inventario completo</div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">Respaldo de productos y stock</div>
+            <button class="btn btn-green" onclick="exportFullInventory()">Exportar JSON</button>
+          </div>
+        </div>
+
+        <div style="margin-top:20px;">
+          <div style="font-size:13px;font-weight:600;margin-bottom:10px;">Importar productos desde JSON</div>
+          <textarea id="json-import" style="width:100%;height:120px;font-size:12px;font-family:'JetBrains Mono',monospace;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;color:var(--text);outline:none;resize:vertical;" placeholder="Pega aquí el JSON de productos..."></textarea>
+          <button class="btn btn-primary" style="margin-top:8px;" onclick="importJSON()">Importar Productos</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ADD/EDIT PRODUCT MODAL -->
+<div class="modal-overlay" id="product-modal">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">Nuevo Producto</div>
+    <input type="hidden" id="edit-idx">
+    <div class="form-group">
+      <label class="form-label">Código de Barras *</label>
+      <input class="form-input" id="f-code" placeholder="7750001001001" type="text">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Nombre del producto *</label>
+      <input class="form-input" id="f-name" placeholder="Aceite Mobil 1W-40 1L">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Categoría</label>
+        <select class="form-select" id="f-cat">
+          <option value="lubricante">Lubricante</option>
+          <option value="promocion">Promoción</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Emoji</label>
+        <input class="form-input" id="f-emoji" placeholder="🛢️" style="font-size:18px;">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Precio (S/)</label>
+        <input class="form-input" id="f-price" type="number" min="0" step="0.01" placeholder="0.00">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Stock inicial</label>
+        <input class="form-input" id="f-stock" type="number" min="0" placeholder="0">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Stock mínimo (alerta)</label>
+      <input class="form-input" id="f-min" type="number" min="0" placeholder="5">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveProduct()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ========== DATA LAYER ==========
+const DEFAULT_PRODUCTS = [
+  { code:"7750001001001", name:"Aceite Mobil 1W-40 1L", category:"lubricante", emoji:"🛢️", stock:24, min:5, price:45.90 },
+  { code:"7750001001002", name:"Aceite Castrol GTX 20W-50 1L", category:"lubricante", emoji:"🛢️", stock:18, min:5, price:38.50 },
+  { code:"7750001001003", name:"Aceite Havoline 10W-30 1L", category:"lubricante", emoji:"🛢️", stock:12, min:4, price:32.00 },
+  { code:"7750001002001", name:"Galonera Mobil 4L", category:"lubricante", emoji:"🪣", stock:8, min:3, price:145.00 },
+  { code:"7750001002002", name:"Galonera Castrol 4L", category:"lubricante", emoji:"🪣", stock:6, min:3, price:128.00 },
+  { code:"7750001003001", name:"Promo Lavado + Aceite", category:"promocion", emoji:"🎁", stock:15, min:2, price:65.00 },
+  { code:"7750001003002", name:"Promo Combo Revisión", category:"promocion", emoji:"🎁", stock:10, min:2, price:85.00 },
+  { code:"7750001003003", name:"Kit Aditivo + Filtro", category:"promocion", emoji:"🎁", stock:7, min:2, price:55.00 },
+  { code:"7750001004001", name:"Filtro de Aceite Universal", category:"lubricante", emoji:"🔧", stock:20, min:5, price:18.00 },
+  { code:"7750001004002", name:"Refrigerante Anticongelante 1L", category:"lubricante", emoji:"💧", stock:14, min:4, price:22.00 },
+];
+
+const DEMO_SALES = [
+  { id:1, code:"7750001001001", name:"Aceite Mobil 1W-40 1L", emoji:"🛢️", category:"lubricante", qty:3, turn:1, operator:"Carlos R.", date:today(), time:"08:15", price:45.90 },
+  { id:2, code:"7750001003001", name:"Promo Lavado + Aceite", emoji:"🎁", category:"promocion", qty:2, turn:1, operator:"Carlos R.", date:today(), time:"09:42", price:65.00 },
+  { id:3, code:"7750001001002", name:"Aceite Castrol GTX 20W-50 1L", emoji:"🛢️", category:"lubricante", qty:4, turn:2, operator:"Ana M.", date:today(), time:"13:10", price:38.50 },
+  { id:4, code:"7750001002001", name:"Galonera Mobil 4L", emoji:"🪣", category:"lubricante", qty:1, turn:2, operator:"Ana M.", date:today(), time:"14:55", price:145.00 },
+  { id:5, code:"7750001003002", name:"Promo Combo Revisión", emoji:"🎁", category:"promocion", qty:3, turn:2, operator:"Ana M.", date:today(), time:"15:30", price:85.00 },
+  { id:6, code:"7750001001003", name:"Aceite Havoline 10W-30 1L", emoji:"🛢️", category:"lubricante", qty:2, turn:3, operator:"Pedro V.", date:today(), time:"19:05", price:32.00 },
+  { id:7, code:"7750001003003", name:"Kit Aditivo + Filtro", emoji:"🎁", category:"promocion", qty:1, turn:3, operator:"Pedro V.", date:today(), time:"20:18", price:55.00 },
+];
+
+function today() {
+  return new Date().toISOString().split('T')[0];
+}
+function loadProducts() {
+  const s = localStorage.getItem('estacion_products');
+  return s ? JSON.parse(s) : JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
+}
+function saveProducts(p) {
+  localStorage.setItem('estacion_products', JSON.stringify(p));
+}
+function loadSales() {
+  const s = localStorage.getItem('estacion_sales');
+  return s ? JSON.parse(s) : [];
+}
+function saveSales(s) {
+  localStorage.setItem('estacion_sales', JSON.stringify(s));
+}
+
+// ========== INIT ==========
+function init() {
+  if (!localStorage.getItem('estacion_products')) saveProducts(DEFAULT_PRODUCTS);
+  const todayStr = today();
+  document.getElementById('today-label').textContent = new Date().toLocaleDateString('es-PE', { weekday:'long', day:'2-digit', month:'long', year:'numeric' });
+  document.getElementById('filter-date').value = todayStr;
+  document.getElementById('filter-date-turnos').value = todayStr;
+  renderDashboard();
+}
+
+function loadDemoData() {
+  if (!localStorage.getItem('estacion_products')) saveProducts(DEFAULT_PRODUCTS);
+  const existing = loadSales();
+  const newSales = DEMO_SALES.filter(d => !existing.find(e => e.id === d.id));
+  saveSales([...existing, ...newSales]);
+  renderDashboard();
+  renderVentas();
+  renderTurnos();
+  renderProductos();
+  renderStock();
+  showToast('✓ Datos demo cargados');
+}
+
+// ========== PAGES ==========
+const pageTitles = { dashboard:'Dashboard', ventas:'Registro de Ventas', turnos:'Resumen por Turno', productos:'Catálogo de Productos', stock:'Control de Stock', importar:'Importar / Exportar' };
+
+function goPage(page) {
+  document.querySelectorAll('.page-view').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  event.currentTarget.classList.add('active');
+  document.getElementById('page-title').textContent = pageTitles[page];
+
+  if (page === 'dashboard') renderDashboard();
+  if (page === 'ventas') renderVentas();
+  if (page === 'turnos') renderTurnos();
+  if (page === 'productos') renderProductos();
+  if (page === 'stock') renderStock();
+}
+
+// ========== DASHBOARD ==========
+function renderDashboard() {
+  const products = loadProducts();
+  const sales = loadSales();
+  const todaySales = sales.filter(s => s.date === today());
+
+  const totalUnits = todaySales.reduce((a, s) => a + s.qty, 0);
+  const lowStock = products.filter(p => p.stock <= p.min).length;
+  const lubriSales = todaySales.filter(s => s.category === 'lubricante').reduce((a, s) => a + s.qty, 0);
+  const promoSales = todaySales.filter(s => s.category === 'promocion').reduce((a, s) => a + s.qty, 0);
+
+  document.getElementById('stats-row').innerHTML = `
+    <div class="stat-card">
+      <div class="stat-label">Ventas hoy</div>
+      <div class="stat-val">${todaySales.length}</div>
+      <div class="stat-sub">${totalUnits} unidades</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Lubricantes</div>
+      <div class="stat-val" style="color:var(--blue)">${lubriSales}</div>
+      <div class="stat-sub">unidades vendidas hoy</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Promociones</div>
+      <div class="stat-val" style="color:var(--green)">${promoSales}</div>
+      <div class="stat-sub">unidades vendidas hoy</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Stock bajo</div>
+      <div class="stat-val" style="color:${lowStock > 0 ? 'var(--red)' : 'var(--green)'}">${lowStock}</div>
+      <div class="stat-sub">productos bajo mínimo</div>
+    </div>
+  `;
+
+  [1,2,3].forEach(t => {
+    const tSales = todaySales.filter(s => s.turn == t);
+    const units = tSales.reduce((a, s) => a + s.qty, 0);
+  });
+
+  document.getElementById('turn-summary').innerHTML = [1,2,3].map(t => {
+    const tSales = todaySales.filter(s => s.turn == t);
+    const units = tSales.reduce((a, s) => a + s.qty, 0);
+    const colors = ['var(--blue)','var(--green)','var(--accent)'];
+    return `<div class="summary-item">
+      <div class="summary-turn" style="color:${colors[t-1]}">Turno ${t}</div>
+      <div class="summary-num">${units}</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:2px;">${tSales.length} ventas</div>
+    </div>`;
+  }).join('');
+
+  const tbody = document.getElementById('dashboard-tbody');
+  tbody.innerHTML = todaySales.length === 0
+    ? `<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px;">Sin ventas registradas hoy. <button class="btn btn-ghost" onclick="loadDemoData()" style="margin-left:8px;">Cargar datos demo</button></td></tr>`
+    : todaySales.map(s => `
+      <tr class="t${s.turn}">
+        <td><span class="badge badge-turn">T${s.turn}</span></td>
+        <td class="mono">${s.time}</td>
+        <td>${s.operator}</td>
+        <td>${s.emoji} ${s.name}</td>
+        <td><span class="badge ${s.category === 'lubricante' ? 'badge-lube' : 'badge-promo'}">${s.category}</span></td>
+        <td style="font-weight:600;font-family:'JetBrains Mono',monospace;">×${s.qty}</td>
+      </tr>
+    `).join('');
+}
+
+// ========== VENTAS ==========
+function renderVentas() {
+  let sales = loadSales();
+  const fDate = document.getElementById('filter-date').value;
+  const fTurn = document.getElementById('filter-turn').value;
+  const fCat = document.getElementById('filter-cat').value;
+  const fSearch = document.getElementById('filter-search').value.toLowerCase();
+
+  if (fDate) sales = sales.filter(s => s.date === fDate);
+  if (fTurn) sales = sales.filter(s => s.turn == fTurn);
+  if (fCat) sales = sales.filter(s => s.category === fCat);
+  if (fSearch) sales = sales.filter(s => s.name.toLowerCase().includes(fSearch) || s.code.includes(fSearch));
+
+  const tbody = document.getElementById('ventas-tbody');
+  tbody.innerHTML = sales.length === 0
+    ? `<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:24px;">Sin resultados</td></tr>`
+    : sales.map((s, i) => `
+      <tr class="t${s.turn}">
+        <td class="mono">${s.date}</td>
+        <td><span class="badge badge-turn">T${s.turn}</span></td>
+        <td class="mono">${s.time}</td>
+        <td contenteditable="true" onblur="editSale(${s.id},'operator',this.textContent)">${s.operator}</td>
+        <td class="mono">${s.code}</td>
+        <td>${s.emoji} ${s.name}</td>
+        <td><span class="badge ${s.category === 'lubricante' ? 'badge-lube' : 'badge-promo'}">${s.category}</span></td>
+        <td contenteditable="true" style="font-weight:600;font-family:'JetBrains Mono',monospace;" onblur="editSale(${s.id},'qty',this.textContent)">${s.qty}</td>
+        <td><button class="action-btn action-del" onclick="deleteSale(${s.id})">🗑 Eliminar</button></td>
+      </tr>
+    `).join('');
+}
+
+function editSale(id, field, value) {
+  let sales = loadSales();
+  const idx = sales.findIndex(s => s.id === id);
+  if (idx < 0) return;
+  if (field === 'qty') {
+    const n = parseInt(value);
+    if (isNaN(n) || n < 0) return;
+    sales[idx][field] = n;
+  } else {
+    sales[idx][field] = value.trim();
+  }
+  saveSales(sales);
+  showToast('✓ Venta actualizada');
+}
+
+function deleteSale(id) {
+  if (!confirm('¿Eliminar esta venta?')) return;
+  let sales = loadSales();
+  saveSales(sales.filter(s => s.id !== id));
+  renderVentas();
+  renderDashboard();
+  showToast('Venta eliminada');
+}
+
+// ========== TURNOS ==========
+function renderTurnos() {
+  let sales = loadSales();
+  const fDate = document.getElementById('filter-date-turnos').value;
+  if (fDate) sales = sales.filter(s => s.date === fDate);
+
+  const groups = {};
+  sales.forEach(s => {
+    const key = `${s.date}_${s.turn}_${s.operator}`;
+    if (!groups[key]) groups[key] = { date:s.date, turn:s.turn, operator:s.operator, products:new Set(), units:0, items:[] };
+    groups[key].products.add(s.name);
+    groups[key].units += s.qty;
+    groups[key].items.push(s);
+  });
+
+  const tbody = document.getElementById('turnos-tbody');
+  const rows = Object.values(groups);
+  tbody.innerHTML = rows.length === 0
+    ? `<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px;">Sin datos para este período</td></tr>`
+    : rows.map(g => `
+      <tr class="t${g.turn}">
+        <td class="mono">${g.date}</td>
+        <td><span class="badge badge-turn">T${g.turn}</span></td>
+        <td>${g.operator}</td>
+        <td>${g.products.size} productos</td>
+        <td style="font-weight:600;font-family:'JetBrains Mono',monospace;">${g.units}</td>
+        <td style="font-size:11px;color:var(--muted);">${[...g.products].join(', ').substring(0,60)}${[...g.products].join(', ').length > 60 ? '…' : ''}</td>
+      </tr>
+    `).join('');
+}
+
+// ========== PRODUCTOS ==========
+function renderProductos() {
+  const products = loadProducts();
+  const tbody = document.getElementById('productos-tbody');
+  tbody.innerHTML = products.map((p, i) => `
+    <tr>
+      <td style="font-size:20px;padding:8px 14px;">${p.emoji}</td>
+      <td class="mono">${p.code}</td>
+      <td style="font-weight:500;">${p.name}</td>
+      <td><span class="badge ${p.category === 'lubricante' ? 'badge-lube' : 'badge-promo'}">${p.category}</span></td>
+      <td style="font-family:'JetBrains Mono',monospace;">S/ ${p.price.toFixed(2)}</td>
+      <td style="font-family:'JetBrains Mono',monospace;">${p.min}</td>
+      <td>
+        <button class="action-btn action-edit" onclick="editProduct(${i})">✏ Editar</button>
+        <button class="action-btn action-del" onclick="deleteProduct(${i})" style="margin-left:4px;">🗑</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+// ========== STOCK ==========
+function renderStock() {
+  const products = loadProducts();
+  const tbody = document.getElementById('stock-tbody');
+  tbody.innerHTML = products.map((p, i) => {
+    const pct = Math.min(100, Math.round((p.stock / Math.max(p.stock, p.min * 3)) * 100));
+    const color = p.stock <= p.min ? 'var(--red)' : p.stock <= p.min * 2 ? 'var(--amber)' : 'var(--green)';
+    const status = p.stock <= p.min ? 'badge-low' : 'badge-ok';
+    const statusText = p.stock <= p.min ? '⚠ Bajo' : '✓ OK';
+    return `
+      <tr>
+        <td style="font-size:20px;padding:8px 14px;">${p.emoji}</td>
+        <td style="font-weight:500;max-width:180px;">${p.name}</td>
+        <td><span class="badge ${p.category === 'lubricante' ? 'badge-lube' : 'badge-promo'}">${p.category}</span></td>
+        <td>
+          <div class="stock-bar-wrap">
+            <div class="stock-bar"><div class="stock-fill" style="width:${pct}%;background:${color};"></div></div>
+            <span class="stock-num" style="color:${color};">${p.stock}</span>
+          </div>
+        </td>
+        <td style="font-family:'JetBrains Mono',monospace;">${p.min}</td>
+        <td><span class="badge ${status}">${statusText}</span></td>
+        <td>
+          <input type="number" style="width:70px;font-size:13px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-family:'Inter',sans-serif;background:var(--surface2);" value="${p.stock}" id="stock-input-${i}" min="0">
+          <button class="action-btn action-edit" onclick="updateStock(${i})" style="margin-left:4px;">Guardar</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function updateStock(i) {
+  const products = loadProducts();
+  const val = parseInt(document.getElementById('stock-input-' + i).value);
+  if (isNaN(val) || val < 0) return;
+  products[i].stock = val;
+  saveProducts(products);
+  renderStock();
+  showToast('✓ Stock actualizado');
+}
+
+// ========== PRODUCT CRUD ==========
+function openAddProduct() {
+  document.getElementById('modal-title').textContent = 'Nuevo Producto';
+  document.getElementById('edit-idx').value = '';
+  ['f-code','f-name','f-price','f-stock','f-min'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f-emoji').value = '🛢️';
+  document.getElementById('f-cat').value = 'lubricante';
+  document.getElementById('product-modal').classList.add('open');
+}
+
+function editProduct(i) {
+  const products = loadProducts();
+  const p = products[i];
+  document.getElementById('modal-title').textContent = 'Editar Producto';
+  document.getElementById('edit-idx').value = i;
+  document.getElementById('f-code').value = p.code;
+  document.getElementById('f-name').value = p.name;
+  document.getElementById('f-cat').value = p.category;
+  document.getElementById('f-emoji').value = p.emoji;
+  document.getElementById('f-price').value = p.price;
+  document.getElementById('f-stock').value = p.stock;
+  document.getElementById('f-min').value = p.min;
+  document.getElementById('product-modal').classList.add('open');
+  goPage('productos');
+}
+
+function saveProduct() {
+  const code = document.getElementById('f-code').value.trim();
+  const name = document.getElementById('f-name').value.trim();
+  if (!code || !name) { showToast('Código y nombre son requeridos', true); return; }
+
+  const products = loadProducts();
+  const prod = {
+    code, name,
+    category: document.getElementById('f-cat').value,
+    emoji: document.getElementById('f-emoji').value || '📦',
+    price: parseFloat(document.getElementById('f-price').value) || 0,
+    stock: parseInt(document.getElementById('f-stock').value) || 0,
+    min: parseInt(document.getElementById('f-min').value) || 5,
+  };
+
+  const idx = document.getElementById('edit-idx').value;
+  if (idx !== '') {
+    products[parseInt(idx)] = prod;
+    showToast('✓ Producto actualizado');
+  } else {
+    if (products.find(p => p.code === code)) { showToast('⚠ Código ya existe', true); return; }
+    products.push(prod);
+    showToast('✓ Producto agregado');
+  }
+  saveProducts(products);
+  closeModal();
+  renderProductos();
+  renderStock();
+  renderDashboard();
+}
+
+function deleteProduct(i) {
+  if (!confirm('¿Eliminar este producto?')) return;
+  const products = loadProducts();
+  products.splice(i, 1);
+  saveProducts(products);
+  renderProductos();
+  renderStock();
+  showToast('Producto eliminado');
+}
+
+function closeModal() {
+  document.getElementById('product-modal').classList.remove('open');
+}
+document.getElementById('product-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// ========== EXPORT / IMPORT ==========
+function exportCSV() {
+  const sales = loadSales();
+  const fDate = document.getElementById('filter-date').value;
+  const fTurn = document.getElementById('filter-turn').value;
+  let filtered = sales;
+  if (fDate) filtered = filtered.filter(s => s.date === fDate);
+  if (fTurn) filtered = filtered.filter(s => s.turn == fTurn);
+
+  const csv = [
+    'Fecha,Turno,Hora,Operador,Código,Producto,Categoría,Cantidad,Precio',
+    ...filtered.map(s =>
+      `${s.date},${s.turn},${s.time},${s.operator},"${s.code}","${s.name}",${s.category},${s.qty},${s.price}`
+    )
+  ].join('\n');
+  downloadFile(csv, `ventas_${fDate || 'completo'}.csv`, 'text/csv');
+  showToast('✓ CSV exportado');
+}
+
+function exportFullInventory() {
+  const data = { products: loadProducts(), sales: loadSales(), exported: new Date().toISOString() };
+  downloadFile(JSON.stringify(data, null, 2), 'inventario_estacion.json', 'application/json');
+  showToast('✓ Inventario exportado');
+}
+
+function importCSV(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const lines = e.target.result.split('\n').slice(1).filter(l => l.trim());
+    const newSales = [];
+    lines.forEach((line, i) => {
+      const parts = line.split(',');
+      if (parts.length < 8) return;
+      newSales.push({
+        id: Date.now() + i,
+        date: parts[0], turn: parseInt(parts[1]), time: parts[2],
+        operator: parts[3], code: parts[4].replace(/"/g,''),
+        name: parts[5].replace(/"/g,''), category: parts[6],
+        qty: parseInt(parts[7]), price: parseFloat(parts[8]) || 0,
+        emoji: '📦'
+      });
+    });
+    const sales = loadSales();
+    saveSales([...sales, ...newSales]);
+    renderDashboard();
+    renderVentas();
+    showToast(`✓ ${newSales.length} ventas importadas`);
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+
+function importJSON() {
+  try {
+    const text = document.getElementById('json-import').value.trim();
+    const data = JSON.parse(text);
+    if (data.products) { saveProducts(data.products); showToast('✓ ' + data.products.length + ' productos importados'); }
+    if (data.sales) { saveSales(data.sales); }
+    renderProductos(); renderStock(); renderDashboard();
+    document.getElementById('json-import').value = '';
+  } catch(e) {
+    showToast('⚠ JSON inválido', true);
+  }
+}
+
+function downloadFile(content, filename, type) {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ========== TOAST ==========
+function showToast(msg, isError = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = isError ? 'var(--red)' : 'var(--text)';
+  t.className = 'toast show';
+  setTimeout(() => t.className = 'toast', 2800);
+}
+
+init();
+</script>
+</body>
+</html>
